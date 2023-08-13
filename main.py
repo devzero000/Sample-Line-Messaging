@@ -1,3 +1,7 @@
+import requests
+import config.api as api
+
+from apscheduler.schedulers.background import BackgroundScheduler
 from flask import Flask, request, abort
 from linebot.v3 import (
     WebhookHandler
@@ -22,19 +26,28 @@ import utils.functions as func
 app = Flask(__name__)
 
 base_api = '/api'
+keep_alive = 0
 
 
-@app.route(f'{base_api}/', methods=['GET'])
-def home():
-    return {
-        'message': "Hello! I'm Kernel, your stock technical information assistant. Whether you're an experienced trader"
-                   "or just starting out, I'm here to provide you with in-depth technical insights about stocks. "
-                   "How can I assist you today?"
-    }
+def set_keep_alive_web_server():
+    requests.get(api.WEBSERVER)
 
+
+scheduler = BackgroundScheduler()
+scheduler.add_job(func=set_keep_alive_web_server, trigger="interval", seconds=60)
+scheduler.start()
 
 configuration = Configuration(access_token=settings.CHANNEL_ACCESS)
 handler = WebhookHandler(settings.CHANNEL_SECRET)
+
+
+@app.route(f'/', methods=['GET'])
+def home():
+    return {
+        'message': "Hello! I'm Kernel, your stock technical information assistant.",
+        'created': 'Nick Tinnapat',
+        'keep-alive': keep_alive
+    }
 
 
 @app.route(f'{base_api}/callback', methods=['POST'])
