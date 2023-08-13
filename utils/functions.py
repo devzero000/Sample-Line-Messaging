@@ -140,7 +140,7 @@ def extract_forex_info(data: dict) -> dict:
                         'signal': get_signal(indicator),
                         'description': desc,
                     }
-                    forex_info[key] = forex_info[key] | load_fibo
+                    forex_info[key] = {**forex_info[key], **load_fibo}
 
     return forex_info
 
