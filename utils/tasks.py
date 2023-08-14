@@ -1,6 +1,7 @@
 import json
 
 import requests
+from firebase_admin import firestore
 
 import config.api as api
 import config.settings as settings
@@ -36,8 +37,12 @@ def task_alert_trade():
 
 
 def _extract_forex_info(forex_entries):
+    db = firestore.client()
+    doc_ref = db.collection('settings').document('INDICATOR')
+    fb_config = doc_ref.get().to_dict()
+
     forex_info = {}
-    alert_value = settings.ALERT_VALUE_INDICATOR
+    alert_value = fb_config.get('maximum_indicator', settings.ALERT_VALUE_INDICATOR)
 
     for entry in forex_entries:
         currency = entry.get('s')

@@ -1,5 +1,7 @@
 from apscheduler.schedulers.background import BackgroundScheduler
 from flask import Flask, request, abort
+import firebase_admin
+from firebase_admin import credentials, firestore
 from linebot.v3 import (
     WebhookHandler
 )
@@ -67,4 +69,8 @@ def handle_message(event):
 
 
 if __name__ == "__main__":
+    # Init firebase
+    cred = credentials.Certificate('config/credential.json')
+    firebase_admin.initialize_app(cred)
+
     app.run(debug=False, port=8000)
