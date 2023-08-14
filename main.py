@@ -33,6 +33,10 @@ scheduler.add_job(func=task.task_set_keep_alive_web_server, trigger="interval", 
 scheduler.add_job(func=task.task_alert_trade, trigger="interval", seconds=60)
 scheduler.start()
 
+# Init firebase
+cred = credentials.Certificate('config/credential.json')
+firebase_admin.initialize_app(cred)
+
 
 @app.route(f'/', methods=['GET'])
 def home():
@@ -70,8 +74,4 @@ def handle_message(event):
 
 
 if __name__ == "__main__":
-    # Init firebase
-    cred = credentials.Certificate('config/credential.json')
-    firebase_admin.initialize_app(cred)
-
     app.run(debug=False, port=8000)
