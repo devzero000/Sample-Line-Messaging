@@ -13,7 +13,10 @@ from linebot.v3.messaging import (
     Configuration,
     ApiClient,
     MessagingApi,
-    ReplyMessageRequest, FlexMessage, FlexContainer,
+    PushMessageRequest,
+    ReplyMessageRequest,
+    FlexMessage,
+    FlexContainer,
 )
 from linebot.v3.webhooks import (
     MessageEvent,
@@ -84,13 +87,25 @@ def handle_message(event):
         """
 
         flex_content = func.generate_corousel_content()
-        message = FlexMessage(alt_text="OverTrade Signal", contents=FlexContainer.from_json(flex_content))
-        line_bot_api.reply_message(
-            ReplyMessageRequest(
-                reply_token=event.reply_token,
-                messages=[message]
+        if len(flex_content) == 1:
+            message = FlexMessage(alt_text="Overtrade Signal", contents=FlexContainer.from_json(flex_content))
+            line_bot_api.reply_message(
+                ReplyMessageRequest(
+                    reply_token=event.reply_token,
+                    messages=[message],
+                    timeout=60
+                )
             )
-        )
+        else:
+            for items in flex_content:
+                message = FlexMessage(alt_text="Overtrade Signal", contents=FlexContainer.from_json(items))
+                line_bot_api.push_message(
+                    PushMessageRequest(
+                        to=event.source.user_id,
+                        messages=[message],
+                        timeout=60
+                    )
+                )
 
 
 if __name__ == "__main__":

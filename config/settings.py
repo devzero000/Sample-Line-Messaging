@@ -12,6 +12,9 @@ TOKEN = 'YWRtaW46NTQ2ZHEhJzxkQl0iVUc3KEJC'
 USE_TZ = True
 TIME_ZONE = 'Asia/Bangkok'
 
+# Line developer max corousel contents
+MAXIMUM_ITEMS = 12
+
 # Constant
 
 # This is set to 70. The RSI value of 70 is commonly used as a threshold to determine if a currency pair is overbought.

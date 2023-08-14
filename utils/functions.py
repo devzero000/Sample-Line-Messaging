@@ -422,13 +422,21 @@ def generate_bubble_string(info: dict) -> dict:
 def generate_corousel_content():
     info = get_info()
 
-    corousel_string = {
-        "type": "carousel",
-        "contents": [
-            get_payload_for_bubble(instance, generate_bubble_string) for _, instance in info.items()
-        ]
-    }
-    return json.dumps(corousel_string)
+    # Breaking down the info into chunks of 12
+    chunks = [dict(list(info.items())[i:i + settings.MAXIMUM_ITEMS])
+              for i in range(0, len(info), settings.MAXIMUM_ITEMS)]
+
+    all_carousels = []
+    for chunk in chunks:
+        corousel_string = {
+            "type": "carousel",
+            "contents": [
+                get_payload_for_bubble(instance, generate_bubble_string) for _, instance in chunk.items()
+            ]
+        }
+        all_carousels.append(json.dumps(corousel_string))
+
+    return all_carousels
 
 
 def get_payload_for_bubble(instance, func):
