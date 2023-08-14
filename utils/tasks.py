@@ -43,6 +43,7 @@ def _extract_forex_info(forex_entries):
 
     forex_info = {}
     alert_value = fb_config.get('maximum_indicator', settings.ALERT_VALUE_INDICATOR)
+    print(f'Alert Value: {alert_value}')
 
     for entry in forex_entries:
         currency = entry.get('s')

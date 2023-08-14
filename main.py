@@ -24,11 +24,6 @@ app = Flask(__name__)
 
 base_api = '/api'
 
-scheduler = BackgroundScheduler()
-scheduler.add_job(func=task.task_set_keep_alive_web_server, trigger="interval", seconds=60)
-scheduler.add_job(func=task.task_alert_trade, trigger="interval", seconds=60)
-scheduler.start()
-
 configuration = Configuration(access_token=settings.CHANNEL_ACCESS)
 handler = WebhookHandler(settings.CHANNEL_SECRET)
 
@@ -69,6 +64,12 @@ def handle_message(event):
 
 
 if __name__ == "__main__":
+    # schedule tasks
+    scheduler = BackgroundScheduler()
+    scheduler.add_job(func=task.task_set_keep_alive_web_server, trigger="interval", seconds=60)
+    scheduler.add_job(func=task.task_alert_trade, trigger="interval", seconds=60)
+    scheduler.start()
+
     # Init firebase
     cred = credentials.Certificate('config/credential.json')
     firebase_admin.initialize_app(cred)
