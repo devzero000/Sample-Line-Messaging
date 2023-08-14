@@ -87,8 +87,9 @@ def handle_message(event):
         """
 
         flex_content = func.generate_corousel_content()
+
         if len(flex_content) == 1:
-            message = FlexMessage(alt_text="Overtrade Signal", contents=FlexContainer.from_json(flex_content))
+            message = FlexMessage(alt_text="Overtrade Signal", contents=FlexContainer.from_json(flex_content[0]))
             line_bot_api.reply_message(
                 ReplyMessageRequest(
                     reply_token=event.reply_token,
