@@ -1,7 +1,7 @@
-from apscheduler.schedulers.background import BackgroundScheduler
-from flask import Flask, request, abort
 import firebase_admin
-from firebase_admin import credentials, firestore
+from apscheduler.schedulers.background import BackgroundScheduler
+from firebase_admin import credentials
+from flask import Flask, request, abort
 from linebot.v3 import (
     WebhookHandler
 )
