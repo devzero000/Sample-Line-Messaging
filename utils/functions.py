@@ -1,10 +1,19 @@
+import functools
 import json
 
 import requests
+from linebot.v3.messaging import (
+    ApiClient,
+    MessagingApi,
+    PushMessageRequest,
+    ReplyMessageRequest,
+    FlexMessage,
+    FlexContainer, TextMessage,
+)
 
 import config.api as api
 import config.settings as settings
-from utils import timezone
+import flex.template as template
 
 
 def get_currency_pair_description(currency: str) -> tuple:
@@ -157,268 +166,6 @@ def post_data_to_tradingview(url: str, header: dict, payload: json):
     return response.json()
 
 
-def generate_bubble_string(info: dict) -> dict:
-    symbol = info['symbol']
-    desc = info['desc']
-    trend = info['signal']
-    timeframe = info['timeframe']
-    value = info['value']
-    is_up_trend = bool(trend == 'UP TREND')
-
-    detail = timezone.localtime().strftime("%Y.%m.%d %H.%M")
-
-    bubble_string = {
-        "type": "bubble",
-        "body": {
-            "type": "box",
-            "layout": "vertical",
-            "contents": [
-                {
-                    "type": "text",
-                    "text": trend,
-                    "weight": "bold",
-                    "color": "#1DB446" if is_up_trend else "#f5314b",
-                    "size": "sm"
-                },
-                {
-                    "type": "text",
-                    "text": symbol,
-                    "weight": "bold",
-                    "size": "xxl",
-                    "margin": "md"
-                },
-                {
-                    "type": "text",
-                    "text": desc,
-                    "size": "xs",
-                    "color": "#aaaaaa",
-                    "wrap": True
-                },
-                {
-                    "type": "text",
-                    "text": f"Timeframe: {timeframe} - {value}%",
-                    "color": "#000000",
-                    "align": "start",
-                    "size": "xs",
-                    "gravity": "center",
-                    "margin": "lg"
-                },
-                {
-                    "type": "box",
-                    "layout": "vertical",
-                    "contents": [
-                        {
-                            "type": "box",
-                            "layout": "vertical",
-                            "contents": [
-                                {
-                                    "type": "filler"
-                                }
-                            ],
-                            "width": f"{value}%",
-                            "backgroundColor": "#2edb02" if is_up_trend else "#ff2424",
-                            "height": "6px"
-                        }
-                    ],
-                    "backgroundColor": "#f0f0f2",
-                    "height": "6px",
-                    "margin": "sm"
-                },
-                {
-                    "type": "separator",
-                    "margin": "xxl"
-                },
-                {
-                    "type": "box",
-                    "layout": "vertical",
-                    "margin": "xxl",
-                    "spacing": "sm",
-                    "contents": [
-                        {
-                            "type": "box",
-                            "layout": "horizontal",
-                            "contents": [
-                                {
-                                    "type": "text",
-                                    "weight": "bold",
-                                    "text": "Pivots",
-                                    "size": "sm",
-                                    "color": "#555555",
-                                    "flex": 0
-                                },
-                                {
-                                    "type": "text",
-                                    "weight": "bold",
-                                    "text": "Fibonacci",
-                                    "size": "sm",
-                                    "color": "#111111",
-                                    "align": "end"
-                                }
-                            ]
-                        },
-                        {
-                            "type": "separator",
-                            "color": "#FFFFFF",
-                            "margin": "sm"
-                        },
-                        {
-                            "type": "box",
-                            "layout": "horizontal",
-                            "contents": [
-                                {
-                                    "type": "text",
-                                    "text": "Resistance #3",
-                                    "size": "sm",
-                                    "color": "#555555",
-                                    "flex": 0
-                                },
-                                {
-                                    "type": "text",
-                                    "text": info['R3'],
-                                    "size": "sm",
-                                    "color": "#111111",
-                                    "align": "end"
-                                }
-                            ]
-                        },
-                        {
-                            "type": "box",
-                            "layout": "horizontal",
-                            "contents": [
-                                {
-                                    "type": "text",
-                                    "text": "Resistance #2",
-                                    "size": "sm",
-                                    "color": "#555555",
-                                    "flex": 0
-                                },
-                                {
-                                    "type": "text",
-                                    "text": info['R2'],
-                                    "size": "sm",
-                                    "color": "#111111",
-                                    "align": "end"
-                                }
-                            ]
-                        },
-                        {
-                            "type": "box",
-                            "layout": "horizontal",
-                            "contents": [
-                                {
-                                    "type": "text",
-                                    "text": "Resistance #1",
-                                    "size": "sm",
-                                    "color": "#555555",
-                                    "flex": 0
-                                },
-                                {
-                                    "type": "text",
-                                    "text": info['R1'],
-                                    "size": "sm",
-                                    "color": "#111111",
-                                    "align": "end"
-                                }
-                            ]
-                        },
-                        {
-                            "type": "box",
-                            "layout": "horizontal",
-                            "contents": [
-                                {
-                                    "type": "text",
-                                    "text": "Support #1",
-                                    "size": "sm",
-                                    "color": "#555555",
-                                    "flex": 0
-                                },
-                                {
-                                    "type": "text",
-                                    "text": info['S1'],
-                                    "size": "sm",
-                                    "color": "#111111",
-                                    "align": "end"
-                                }
-                            ]
-                        },
-                        {
-                            "type": "box",
-                            "layout": "horizontal",
-                            "contents": [
-                                {
-                                    "type": "text",
-                                    "text": "Support #2",
-                                    "size": "sm",
-                                    "color": "#555555",
-                                    "flex": 0
-                                },
-                                {
-                                    "type": "text",
-                                    "text": info['S2'],
-                                    "size": "sm",
-                                    "color": "#111111",
-                                    "align": "end"
-                                }
-                            ]
-                        },
-                        {
-                            "type": "box",
-                            "layout": "horizontal",
-                            "contents": [
-                                {
-                                    "type": "text",
-                                    "text": "Support #3",
-                                    "size": "sm",
-                                    "color": "#555555",
-                                    "flex": 0
-                                },
-                                {
-                                    "type": "text",
-                                    "text": info['S3'],
-                                    "size": "sm",
-                                    "color": "#111111",
-                                    "align": "end"
-                                }
-                            ]
-                        },
-                    ]
-                },
-                {
-                    "type": "separator",
-                    "margin": "xxl"
-                },
-                {
-                    "type": "box",
-                    "layout": "horizontal",
-                    "margin": "md",
-                    "contents": [
-                        {
-                            "type": "text",
-                            "text": "TIMESTAMP",
-                            "size": "xs",
-                            "color": "#aaaaaa",
-                            "flex": 0
-                        },
-                        {
-                            "type": "text",
-                            "text": f"#{detail}",
-                            "color": "#aaaaaa",
-                            "size": "xs",
-                            "align": "end"
-                        }
-                    ]
-                }
-            ]
-        },
-        "styles": {
-            "footer": {
-                "separator": True
-            }
-        }
-    }
-    return bubble_string
-
-
 def generate_corousel_content():
     info = get_info()
 
@@ -431,7 +178,10 @@ def generate_corousel_content():
         corousel_string = {
             "type": "carousel",
             "contents": [
-                get_payload_for_bubble(instance, generate_bubble_string) for _, instance in chunk.items()
+                get_payload_for_bubble(
+                    instance,
+                    template.generate_bubble_string)
+                for _, instance in chunk.items()
             ]
         }
         all_carousels.append(json.dumps(corousel_string))
@@ -456,7 +206,7 @@ def get_payload_for_bubble(instance, func):
     return func(payload)
 
 
-def get_info():
+def get_info(is_task=False):
     payload = settings.BASE_PAYLOAD
     json_payload = json.dumps(payload, indent=4)
     headers = {
@@ -465,5 +215,57 @@ def get_info():
     }
     res = post_data_to_tradingview(url=api.TRADINGVIEW, header=headers, payload=json_payload)
 
+    if is_task:
+        return res
+
     data = extract_forex_info(res)
     return data
+
+
+def rgetattr(obj, attr, *args):
+    def _getattr(obj, attr):
+        return getattr(obj, attr, *args)
+
+    return functools.reduce(_getattr, [obj] + attr.split('.'))
+
+
+def push_message(event=None, content=None, **kwargs):
+    from main import configuration  # fix circular import
+
+    is_task = kwargs.get('is_task', False)
+    with ApiClient(configuration) as api_client:
+        line_bot_api = MessagingApi(api_client)
+
+        """
+        # If you want the system to handle messages that users type in, by detecting 
+        # from the event message (received message), you can explore Dialogflow for further implementation.
+        receive_text = event.message.text
+        """
+
+        if not content and not is_task:
+            return line_bot_api.reply_message(
+                ReplyMessageRequest(
+                    reply_token=getattr(event, 'reply_token', event),
+                    messages=[TextMessage(text='No interesting currency pairs found.')]
+                )
+            )
+
+        if len(content) > settings.MAXIMUM_ITEMS and not is_task:
+            message = FlexMessage(alt_text="Overtrade Signal", contents=FlexContainer.from_json(content[0]))
+            line_bot_api.reply_message(
+                ReplyMessageRequest(
+                    reply_token=getattr(event, 'reply_token', event),
+                    messages=[message],
+                    timeout=60
+                )
+            )
+        else:
+            for items in content:
+                message = FlexMessage(alt_text="Overtrade Signal", contents=FlexContainer.from_json(items))
+                line_bot_api.push_message(
+                    PushMessageRequest(
+                        to=rgetattr(event, 'source.user_id', event),
+                        messages=[message],
+                        timeout=60
+                    )
+                )

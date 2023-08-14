@@ -24,9 +24,16 @@ OVERBOUGHT = 70
 # This might be interpreted by traders as a buying opportunity.
 OVERSOLD = 30
 
+ALERT_VALUE_INDICATOR = 4
+
 INTERVAL = ['M1', 'M5', 'M15', 'M30', 'H1', 'H2', 'H4', 'D1']
 
 PREFIX = 'FX_IDC:'
+
+ICON_UP = 'https://cdn.pic.in.th/file/picinth/up-arrow.png'
+ICON_DOWN = 'https://cdn.pic.in.th/file/picinth/up-arrow-1.png'
+
+GROUP_ID = 'U336a0fca075c76dec4776367b1c93ce4'
 
 CURRENCY = {
     'AUD': 'Australian Dollar',
