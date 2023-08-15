@@ -33,7 +33,7 @@ def task_alert_trade():
         for chunk in chunks
     ]
 
-    func.compile_message(settings.GROUP_ID, all_carousels, is_task=True)
+    func.compile_message(settings.ADMIN_ID, all_carousels, is_task=True)
 
 
 def _extract_forex_info(forex_entries):
