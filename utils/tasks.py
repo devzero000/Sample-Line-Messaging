@@ -33,17 +33,18 @@ def task_alert_trade():
         for chunk in chunks
     ]
 
-    func.push_message(settings.GROUP_ID, all_carousels, is_task=True)
+    func.compile_message(settings.GROUP_ID, all_carousels, is_task=True)
 
 
 def _extract_forex_info(forex_entries):
+    from main import app
     db = firestore.client()
     doc_ref = db.collection('settings').document('INDICATOR')
     fb_config = doc_ref.get().to_dict()
 
     forex_info = {}
     alert_value = fb_config.get('maximum_indicator', settings.ALERT_VALUE_INDICATOR)
-    print(f'Alert Value: {alert_value}')
+    app.logger.info(f'Alert Value: {alert_value}')
 
     for entry in forex_entries:
         currency = entry.get('s')

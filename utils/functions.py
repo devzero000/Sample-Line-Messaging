@@ -35,11 +35,28 @@ def get_currency_pair_description(currency: str) -> tuple:
 
 
 def get_signal(indicator: list) -> str:
-    indicator = indicator[8:16]
+    """
+    Determine the trend of financial data based on positive or negative indicators.
 
-    positive_count = sum(1 for num in indicator if num > 0)
-    negative_count = sum(1 for num in indicator if num < 0)
+    Parameters:
+    - indicator (list): A list of numerical indicators where positive values represent positive signals
+                        and negative values represent negative signals. The function specifically
+                        focuses on the indicators in the index range [8:16].
 
+    Returns:
+    - str: 'UPTREND' if there are more positive indicators,
+           'DOWNTREND' if there are more negative indicators,
+           'NEUTRAL' if the number of positive and negative indicators are equal.
+    """
+
+    # Filter relevant indicators.
+    relevant_indicators = indicator[8:16]
+
+    # Count positive and negative indicators.
+    positive_count = sum(1 for num in relevant_indicators if num > 0)
+    negative_count = sum(1 for num in relevant_indicators if num < 0)
+
+    # Determine trend.
     if positive_count > negative_count:
         return 'UP TREND'
     elif negative_count > positive_count:
@@ -76,36 +93,35 @@ def get_status(indicator: list) -> list:
     return states
 
 
-def tract_fibo(indicator: list, tf: str) -> dict:
-    scope = None
+def extract_fibo(indicator: list, tf: str) -> dict:
+    """
+    Extracts Fibonacci values based on the given timeframe (tf).
 
-    if tf not in settings.INTERVAL:
+    Parameters:
+    - indicator (list): List containing the indicator values.
+    - tf (str): Timeframe, e.g., 'M1', 'M5', etc.
+
+    Returns:
+    - dict: A dictionary containing the Fibonacci values.
+            If the given timeframe is not valid, an empty dictionary is returned.
+    """
+
+    # A mapping of timeframes to their respective index ranges in the indicator list
+    INTERVAL_RANGE = settings.INDICATOR_INTERVAL_RANGE
+
+    if tf not in INTERVAL_RANGE:
         return {}
 
-    if tf == 'M1':
-        scope = indicator[16:22]
-    elif tf == 'M5':
-        scope = indicator[22:28]
-    elif tf == 'M15':
-        scope = indicator[28:34]
-    elif tf == 'M30':
-        scope = indicator[34:40]
-    elif tf == 'H1':
-        scope = indicator[40:46]
-    elif tf == 'H2':
-        scope = indicator[46:52]
-    elif tf == 'H4':
-        scope = indicator[52:58]
-    elif tf == 'D1':
-        scope = indicator[58:64]
+    start, end = INTERVAL_RANGE[tf]
+    scope = indicator[start:end]
 
     fib = {
-        'R3': str('%.5f' % scope[0]),
-        'R2': str('%.5f' % scope[1]),
-        'R1': str('%.5f' % scope[2]),
-        'S1': str('%.5f' % scope[3]),
-        'S2': str('%.5f' % scope[4]),
-        'S3': str('%.5f' % scope[5])
+        'R3': f'{scope[0]:.5f}',
+        'R2': f'{scope[1]:.5f}',
+        'R1': f'{scope[2]:.5f}',
+        'S1': f'{scope[3]:.5f}',
+        'S2': f'{scope[4]:.5f}',
+        'S3': f'{scope[5]:.5f}'
     }
     return fib
 
@@ -122,34 +138,37 @@ def extract_forex_info(data: dict) -> dict:
     """
 
     forex_entries = data.get('data', [])
-
     if not forex_entries:
         return {'error': 'Data not found!'}
 
     forex_info = {}
+
     for entry in forex_entries:
         currency = entry.get('s')
         indicator = entry.get('d')
 
-        if currency:
-            name, desc, base_currency, quote_currency = get_currency_pair_description(currency)
-            status = get_status(indicator)
+        if not currency:
+            continue
 
-            if status:
-                for info in status:
-                    timeframe = info["timeframe"]
-                    key = f'{name}_{timeframe}'
-                    load_fibo = tract_fibo(indicator, timeframe)
-                    forex_info[key] = {
-                        'symbol': name,
-                        'base_currency': base_currency,
-                        'quote_currency': quote_currency,
-                        'value': info['value'],
-                        'timeframe': info['timeframe'],
-                        'signal': get_signal(indicator),
-                        'description': desc,
-                    }
-                    forex_info[key] = {**forex_info[key], **load_fibo}
+        name, desc, base_currency, quote_currency = get_currency_pair_description(currency)
+        status = get_status(indicator)
+
+        if not status:
+            continue
+
+        for info in status:
+            timeframe = info["timeframe"]
+            key = f'{name}_{timeframe}'
+            forex_info[key] = {
+                'symbol': name,
+                'base_currency': base_currency,
+                'quote_currency': quote_currency,
+                'value': info['value'],
+                'timeframe': info['timeframe'],
+                'signal': get_signal(indicator),
+                'description': desc,
+                **extract_fibo(indicator, timeframe)
+            }
 
     return forex_info
 
@@ -166,27 +185,68 @@ def post_data_to_tradingview(url: str, header: dict, payload: json):
     return response.json()
 
 
-def generate_corousel_content():
+def generate_carousel_content():
+    """
+    Generates carousel content based on the information fetched.
+
+    This function retrieves information and then breaks it down
+    into chunks of maximum allowed items (as defined in settings).
+    Each chunk of information is then processed to get a carousel string
+    and appended to a list of all carousels.
+
+    Returns:
+        list: A list of JSON-formatted carousel strings.
+    """
+
+    # Fetch the information
     info = get_info()
 
-    # Breaking down the info into chunks of 12
-    chunks = [dict(list(info.items())[i:i + settings.MAXIMUM_ITEMS])
-              for i in range(0, len(info), settings.MAXIMUM_ITEMS)]
+    # Chunk the information based on the maximum allowed items
+    chunks = _chunk_info(info)
 
-    all_carousels = []
-    for chunk in chunks:
-        corousel_string = {
-            "type": "carousel",
-            "contents": [
-                get_payload_for_bubble(
-                    instance,
-                    template.generate_bubble_string)
-                for _, instance in chunk.items()
-            ]
-        }
-        all_carousels.append(json.dumps(corousel_string))
+    # Process each chunk to generate carousel content
+    all_carousels = [
+        _generate_carousel_from_chunk(chunk)
+        for chunk in chunks
+    ]
 
     return all_carousels
+
+
+def _chunk_info(info):
+    """
+    Splits the information into chunks of a specific size.
+
+    Args:
+        info (dict): The dictionary containing information to be chunked.
+
+    Returns:
+        list: A list of dictionaries where each dictionary is a chunk of the original info.
+    """
+    return [
+        dict(list(info.items())[i:i + settings.MAXIMUM_ITEMS])
+        for i in range(0, len(info), settings.MAXIMUM_ITEMS)
+    ]
+
+
+def _generate_carousel_from_chunk(chunk):
+    """
+    Generates a JSON-formatted carousel string for a given chunk of information.
+
+    Args:
+        chunk (dict): A chunk of information.
+
+    Returns:
+        str: JSON-formatted carousel string.
+    """
+    carousel = {
+        "type": "carousel",
+        "contents": [
+            get_payload_for_bubble(instance, template.generate_bubble_string)
+            for _, instance in chunk.items()
+        ]
+    }
+    return json.dumps(carousel)
 
 
 def get_payload_for_bubble(instance, func):
@@ -229,43 +289,67 @@ def rgetattr(obj, attr, *args):
     return functools.reduce(_getattr, [obj] + attr.split('.'))
 
 
-def push_message(event=None, content=None, **kwargs):
-    from main import configuration  # fix circular import
+def send_message(api, request_type, token, messages, **kwargs):
+    """
+    Sends a message using the specified request type.
 
+    Args:
+    - api: The LINE bot API instance.
+    - request_type: Either 'reply' or 'push'.
+    - token: Token for the communication (reply_token or user_id).
+    - messages: The messages to be sent.
+    - **kwargs: Additional arguments for the request.
+
+    Returns:
+    - Response from the API call.
+    """
+    if request_type == 'reply':
+        return api.reply_message(
+            ReplyMessageRequest(
+                reply_token=token,
+                messages=messages,
+                **kwargs
+            )
+        )
+    elif request_type == 'push':
+        return api.push_message(
+            PushMessageRequest(
+                to=token,
+                messages=messages,
+                **kwargs
+            )
+        )
+
+
+def compile_message(event=None, content=None, **kwargs):
+    """
+    Function to push messages to LINE users.
+
+    Args:
+    - event (Event, optional): Event object containing details of the LINE event.
+    - content (str, optional): The content/message to be sent.
+    - **kwargs: Additional keyword arguments.
+
+    Returns:
+    - None
+    """
+    from main import configuration  # fix circular import
     is_task = kwargs.get('is_task', False)
+
     with ApiClient(configuration) as api_client:
         line_bot_api = MessagingApi(api_client)
 
-        """
-        # If you want the system to handle messages that users type in, by detecting 
-        # from the event message (received message), you can explore Dialogflow for further implementation.
-        receive_text = event.message.text
-        """
-
+        # No content case: Reply with a default message if not a task.
         if not content and not is_task:
-            return line_bot_api.reply_message(
-                ReplyMessageRequest(
-                    reply_token=getattr(event, 'reply_token', event),
-                    messages=[TextMessage(text='No interesting currency pairs found.')]
-                )
-            )
+            send_message(line_bot_api, 'reply', getattr(event, 'reply_token', event),
+                         [TextMessage(text='No interesting currency pairs found.')])
+            return
 
-        if len(content) > settings.MAXIMUM_ITEMS and not is_task:
-            message = FlexMessage(alt_text="Overtrade Signal", contents=FlexContainer.from_json(content[0]))
-            line_bot_api.reply_message(
-                ReplyMessageRequest(
-                    reply_token=getattr(event, 'reply_token', event),
-                    messages=[message],
-                    timeout=60
-                )
-            )
-        else:
-            for items in content:
-                message = FlexMessage(alt_text="Overtrade Signal", contents=FlexContainer.from_json(items))
-                line_bot_api.push_message(
-                    PushMessageRequest(
-                        to=rgetattr(event, 'source.user_id', event),
-                        messages=[message],
-                        timeout=60
-                    )
-                )
+        # Determine the request type and token based on the content and is_task flag.
+        request_type = 'push' if len(content) <= settings.MAXIMUM_ITEMS or is_task else 'reply'
+        token = rgetattr(event, 'source.user_id', event) if request_type == 'push' else getattr(event, 'reply_token',
+                                                                                                event)
+
+        for items in content:
+            message = FlexMessage(alt_text="Overtrade Signal", contents=FlexContainer.from_json(items))
+            send_message(line_bot_api, request_type, token, [message], timeout=60)

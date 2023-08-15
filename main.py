@@ -34,7 +34,7 @@ scheduler.add_job(func=task.task_alert_trade, trigger="interval", seconds=60)
 scheduler.start()
 
 # Init firebase
-cred = credentials.Certificate('config/credential.json')
+cred = credentials.Certificate('/etc/secrets/credential.json')
 firebase_admin.initialize_app(cred)
 
 
@@ -69,8 +69,8 @@ def callback():
 def handle_message(event):
     # You can read more type message event
     # source: # source: https://saixiii.com/chapter6-line-python-sdk/
-    flex_content = func.generate_corousel_content()
-    func.push_message(event, flex_content)
+    flex_content = func.generate_carousel_content()
+    func.compile_message(event, flex_content)
 
 
 if __name__ == "__main__":

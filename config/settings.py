@@ -2,10 +2,12 @@
 FOREX TRADING CONFIGURATION
 """
 # Line Developer
-CHANNEL_ID = '2000392888'
-CHANNEL_SECRET = '25646cc5f5615b25ce8eda12b3f183c6'
-CHANNEL_ACCESS = 'U6AH6Pe1BY+YJWuKwlCN7b2AbNzYvJ0z6DXqR0DAjqCj9GA0CfKRfa3vHThCRjG9Z/13RHaKZiKUUYPWWjeVzPmVIDgKD14NDfk34' \
-                 'grvZ30fkdPPvpSissFWUAfcVKft0WpGu0RQxtgDbE0ONUF6kQdB04t89/1O/w1cDnyilFU='
+CHANNEL_ID = '2000419904'
+CHANNEL_SECRET = 'de235b7898ef01c99c2e2719e96ac8f7'
+CHANNEL_ACCESS = 'PbuTedhOuBM/xM/AUT9sgF9ReK5wubQt54zdEjR7sZY60kMIlDTkD8tfMFV2Ejp0ooXe14tMt/uLPiCeD1Ex2IrDMwLlDwXgdL1m' \
+                 'xKSH3ke++3y9wbbCmhaxsDZ5EhfVM+hCuXg6hpJ5Crgks0lNzAdB04t89/1O/w1cDnyilFU='
+
+ADMIN_ID = 'U336a0fca075c76dec4776367b1c93ce4'
 
 TOKEN = 'YWRtaW46NTQ2ZHEhJzxkQl0iVUc3KEJC'
 
@@ -32,8 +34,6 @@ PREFIX = 'FX_IDC:'
 
 ICON_UP = 'https://cdn.pic.in.th/file/picinth/up-arrow.png'
 ICON_DOWN = 'https://cdn.pic.in.th/file/picinth/up-arrow-1.png'
-
-GROUP_ID = 'U336a0fca075c76dec4776367b1c93ce4'
 
 CURRENCY = {
     'AUD': 'Australian Dollar',
@@ -73,6 +73,18 @@ FOREX_GROUP = [
     'USDCHF',
     'USDJPY',
 ]
+
+# A mapping of timeframes to their respective index ranges in the indicator list
+INDICATOR_INTERVAL_RANGE = {
+    'M1': (16, 22),
+    'M5': (22, 28),
+    'M15': (28, 34),
+    'M30': (34, 40),
+    'H1': (40, 46),
+    'H2': (46, 52),
+    'H4': (52, 58),
+    'D1': (58, 64)
+}
 
 BASE_PAYLOAD = {
     'symbols': {
